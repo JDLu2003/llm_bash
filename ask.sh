@@ -3,6 +3,7 @@
 # 定义 Ollama 的 API 地址
 OLLAMA_API="http://localhost:11434/api/generate"
 
+
 # 定义模型名称
 #OLLAMA_MODEL="deepseek-r1:14b"
 OLLAMA_MODEL="gemma3:12b"
@@ -14,18 +15,41 @@ send_prompt() {
     echo "-----发送 Prompt-----"
 
     # 直接用 curl 获取流式数据，确保实时输出
-    curl -s -N -X POST "$OLLAMA_API" \
+    curl -s -N -X POST https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions \
+    -H "Authorization: Bearer $QWENKEY" \
     -H "Content-Type: application/json" \
-    -d "{
-        \"model\": \"$OLLAMA_MODEL\",
-        \"prompt\": \"$prompt\",
-        \"stream\": true
-    }" | while IFS= read -r line; do
-    # 使用 jq 解析 JSON 并提取 .response 字段
-    response=$(echo "$line" | jq -R -r 'fromjson? | .response')
-    if [ -n "$response" ]; then
-        printf "%s" "$response"
-        ## fflush(stdout)  # 强制刷新输出缓冲区
+    -d '{
+        "stream": true,
+        "model": "qwen-plus",
+        "messages": [
+            {
+                "role": "user",
+                "content": "You are a helpful assistant.your language is Chinese"
+            },
+            {
+                "role": "user", 
+                "content": "'"$prompt"'"
+            }
+        ]
+    }' | while IFS= read -r line; do
+    # 检查是否以 "data: " 开头
+    if [[ "$line" == data:* ]]; then
+        # 去掉 "data: " 前缀
+        json="${line#data: }"
+
+        # 检查是否为 "[DONE]"
+        if [[ "$json" == "[DONE]" ]]; then
+            break
+        fi
+
+        # 使用 jq 解析 JSON 并提取 .choices[0].delta.content
+        content=$(echo "$json" | jq -r '.choices[0].delta.content?')
+
+        # 如果 content 不为空，则输出
+        if [ -n "$content" ]; then
+            printf "%s" "$content"
+            ## fflush(stdout)  # 强制刷新输出缓冲区
+        fi
     fi
 done
     echo  # 确保最终换行
