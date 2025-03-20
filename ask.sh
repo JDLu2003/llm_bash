@@ -10,7 +10,7 @@ OLLAMA_MODEL="gemma3:12b"
 send_prompt() {
     local input_prompt=$1
     local prompt="请你尽量不加思考地、简短地（不超过100字）以普通文本格式回答或解释： $input_prompt"
-    echo "-----发送 Prompt-----"
+    echo "-----发送 Prompt-----\n"
 
     # 构造 JSON 使用 jq
     json_data=$(jq -n --arg p "$prompt" '{
@@ -44,7 +44,7 @@ send_prompt() {
             fi
 
             # 使用 jq 解析 JSON 并提取 .choices[0].delta.content
-            content=$(echo "$json" | jq -r '.choices[0].delta.content?')
+            content=$(echo "$json" | jq -r '.choices[0].delta.content? // empty' 2>/dev/null)
 
             # 如果 content 不为空，则输出
             if [ -n "$content" ]; then
@@ -54,6 +54,7 @@ send_prompt() {
         fi
     done
     echo  # 确保最终换行
+    echo
 }
 
 # 主函数
