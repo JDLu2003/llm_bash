@@ -48,7 +48,7 @@ send_prompt() {
             
             # 如果 content 不为空，则输出
             if [ -n "$content" ]; then
-                printf "%s" "$content"
+                echo -n $content
                 ## fflush(stdout)  # 强制刷新输出缓冲区
             fi
         fi
@@ -58,15 +58,26 @@ send_prompt() {
 
 # 主函数
 main() {
+    local prompt
+
+    # 如果参数数量为0，通过输入IO获取用户输入
     if [[ $# -lt 1 ]]; then
-        echo "用法: $0 <用户 Prompt>"
-        exit 1
+        echo "请输入您的 Prompt:"
+        read -r prompt
+    else
+        # 将所有参数合并为 prompt
+        prompt="$*"
     fi
 
-    # 将所有参数合并为 prompt
-    local prompt="$*"
-
     send_prompt "$prompt"
+
+    while true
+    do
+        echo -n "input word: "
+        read -r prompt
+        send_prompt "$prompt"
+    done
+
 }
 
 # 执行主函数

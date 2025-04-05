@@ -9,17 +9,17 @@ OLLAMA_MODEL="gemma3:12b"
 # 发送 Prompt（流式访问）
 send_prompt() {
     local input_prompt=$1
-    local prompt="请你以普通文本格式（不使用markdown）中文回答或解释： $input_prompt"
+    local prompt="中文回答：这个单词： $input_prompt的英文同义词是什么"
     echo "-----发送 Prompt-----\n"
 
     # 构造 JSON 使用 jq
     json_data=$(jq -n --arg p "$prompt" '{
         "stream": true,
-        "model": "deepseek-v3",
+        "model": "qwen-plus",
         "messages": [
             {
                 "role": "system",
-                "content": "You are a helpful assistant.User flatform is linux or macOS.Please answer briefly"
+                "content": "You are a helpful assistant."
             },
             {
                 "role": "user",
@@ -71,6 +71,14 @@ main() {
     fi
 
     send_prompt "$prompt"
+
+    while true
+    do
+        echo -n "input word: "
+        read -r prompt
+        send_prompt "$prompt"
+    done
+
 }
 
 # 执行主函数
